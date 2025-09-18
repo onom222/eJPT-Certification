@@ -1,0 +1,7 @@
+lab2-footprint
+1. サーバのアイデンティティ
+1) ping domain nameによりIPアドレスを取得
+2）host ip addressによりターミナルを
+3）curl -I domain nameでサーバーの情報を取得
+
+2. gatekeeper instruction reveal
