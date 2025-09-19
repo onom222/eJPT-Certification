@@ -4,4 +4,27 @@ lab2-footprint
 2）host ip addressによりターミナルを
 3）curl -I domain nameでサーバーの情報を取得
 
+*curl：URLに対してHTTP/FTP等のリクエストを送ってレスポンスを取得するコマンドラインツール
+*-I：HTTPのHEADリクエストを送るオプション
+
 2. gatekeeper instruction reveal
+1) コマンドラインで以下のコマンドでrobots.txtを探索：
+curl -s http://ドメイン名/robots.txt
+2) 1)の実行結果でのdisallowの項目を確認
+3) その後その中を順番に以下のコマンド確認
+curl -s http://ドメイン名/disallow
+
+3. anonymous access and connect and explore directory
+1)「nmap -Pn -sV ドメイン名」のコマンドでポートが開いているアプリケーションを確認。
+2) 開いているポートに対してファイルがあるかを確認する。使用したコマンドは以下のもの
+curl -s ftp://anonymous@ドメイン名
+3) そこで見つけたファイルで怪しいものを以下のコマンドで確かめる。
+curl -s ftp://anonymous@ドメイン名/見つけたファイル
+
+4. named database
+1) 3問目で見つけたcreds.txtを確認する
+コマンド：curl -s ftp://anonymous@target.ine.local/creds.txt
+2) 以下のコマンドを使用してデータベース
+mysql -h target.ine.local -P 3306 -u db_admin -p
+3) 以下のコマンドを使用して設定を確認
+コマンド：SHOW DATABASES;
