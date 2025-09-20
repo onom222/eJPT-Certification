@@ -510,7 +510,11 @@ nmap -p445 --script smb-enum-services --script-args smbusername=administrator,sm
 nmap -p445 --script smb-enum-shares,smb-ls --script-args smbusername=administrator,smbpassword=smbserver_771 ドメイン名
 
 task 利用可能なすべての生きているhostを検出する。
-
+ここでは、まず
+1) ターミナルを起動する
+2) ifconfigでIPアドレスを取得する。
+3) その後GUI環境でZenmapを起動
+4) 2)で取得したIPアドレスをZenmapに入力してトポロジーで可視化
 
 
 
