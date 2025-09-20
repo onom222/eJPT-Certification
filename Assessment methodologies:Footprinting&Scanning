@@ -492,6 +492,25 @@ nmap -p445 --script smb-security-mode ドメイン名
 nmap -p445 --script smb-enum-sessions ドメイン名
 7) SMB認証情報を使用してnmapでターゲットをスキャンして、機密情報を検出する。
 nmap -p445 --script smb-enum-sessions --script-args smbusername-administrator=smbserver_771 ドメイン名
+8) 以下のコマンドを使用して、利用可能なすべての共有を列挙する。
+nmap -p445 --script smb-enum-shares ドメイン名
+9) 以下のコマンドで有効な資格情報を使用してすべての共有をスキャンし、権限を確認する。
+nmap -p445 --script smb-enum-shares --script-args smbusername=administrator,smbpassword=smbserver_771 ドメイン名
+10) 以下のコマンドを使用して、ターゲットマシン上のWindowsユーザーを列挙する。
+nmap -p445 --script smb-enum-user --script-args smbusername=administrator,smbpassword=smbserver_771 ドメイン名
+11) 以下のコマンドを使用して、サーバーの統計情報を取得する。
+nmap -p445 --script smb-server-stats --script-args smbusername=administrator,smbpassword=smbserver_771 ドメイン名
+12) 以下のコマンドを使用して、ターゲットマシン上で使用可能なドメインを列挙する。
+nmap -p445 --script smb-enum-domains --script-args smbusername=administrator,smbpassword=smbserver_771 ドメイン名
+13) 以下のコマンドを使用して、ターゲットマシン上で使用可能なユーザーグループを列挙する。
+nmap -p445 --script smb-enum-groups --script-args smbusername=administrator,smbpassword=smbserver_771 ドメイン名
+14) 以下のコマンドを使用して、ターゲットマシン上のサービスを列挙する。
+nmap -p445 --script smb-enum-services --script-args smbusername=administrator,smbpassword=smbserver_771 ドメイン名
+15) 以下のコマンドを使用して、すべての共有フォルダとドライブを列挙して、すべての共有フォルダーに対してlsコマンドを実行する。
+nmap -p445 --script smb-enum-shares,smb-ls --script-args smbusername=administrator,smbpassword=smbserver_771 ドメイン名
+
+task 利用可能なすべての生きているhostを検出する。
+
 
 
 
