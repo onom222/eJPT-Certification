@@ -486,8 +486,13 @@ task：サービスのフィンガープリントを作成し、nmapスクリプ
 4) nmapスクリプトを実行して、smbサーバでサポートされているプロトコルとdialectを一覧表示する。
 nmap -pポート番号 --script 対象のプロトコル名-protocols ドメイン名
 5) セキュリティモードスクリプトを実行して、smbセキュリティに関する情報を返す
-nmap -p445 --script snmb-security-mode ドメイン名
+nmap -p445 --script smb-security-mode ドメイン名
 →これによりゲストユーザーを使用して対象のsmbサーバーにアクセスしようとし、smbセキュリティレベルの情報を受け取る
+6) nmapスクリプトを使用して、SMB共有経由でシステムにログインしているユーザを列挙する
+nmap -p445 --script smb-enum-sessions ドメイン名
+7) SMB認証情報を使用してnmapでターゲットをスキャンして、機密情報を検出する。
+nmap -p445 --script smb-enum-sessions --script-args smbusername-administrator=smbserver_771 ドメイン名
+
 
 
 
