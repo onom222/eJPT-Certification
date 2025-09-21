@@ -18,4 +18,104 @@ quiz
 ・nmapの列挙機能を使用して収集できる情報は、サービスのバージョンとOS
 ・nmapの-sVフラグは、開いているポートで実行されているサービスのバージョンを識別する。
 
+nmapでのスキャン結果をMetasploitフレームワークにインポートする
+・ここで行うことは、結果をXMLに出力し、Metasploitにインポートする。
+
+・以下のコマンドの流れで行う
+1) service postgresql start 
+2) msfconsole
+3) db_status(データベースの状態確認）
+4) workspace(確認する）
+5) workspace -a 作りたいworkspace名
+6) db_import directory（データベースへインポートしたい）
+7) db_nmap -Pn -sV -O IPアドレス
+
+quiz
+・nmapスキャン結果をインポートする前にMetasploitで新しいワークスペースを作成が推奨される理由は、結果が整理されるようにするため
+・nmap スキャン結果を使用するコンテキストでMetasploitフレームワークコンソールを起動する前の最初の手段は、DBの起動
+
+タスク：Nmapスキャン結果をMSFにインポートする。
+1) kaliLinuxを起動する。
+2) 以下のコマンドで、ターゲットマシンにアクセスできるか確認する
+ping -c 回数 IPアドレス
+3) 以下のコマンドで、nmapスキャンを実行し、出力をXML形式で保存する。
+nmap -sV -Pn -oX myscan.xml ドメイン名
+4) 以下のコマンドで、postgresqlデータベースサービスを起動する。
+service postgresql start
+5) 以下のコマンドで、Metasploit Frameworkコンソールを起動する。
+msfconsole
+6) 以下のコマンドで、ＭＳＦデータベースが接続されていることを確認する
+db_status
+7) 以下のコマンドで、結果をインポートする。
+db_import myscan.xml
+8) 以下のコマンドで、hostとserviceで正しくできているかを確認する。
+hosts
+services
+
+補助モジュールを使用したポートスキャン
+・補助モジュールは、スキャン、探索、ファジングなどの機能を実行するために使用
+→補助モジュールはペイロードとペアにすることはできない。
+→補助モジュールは、ターゲットからの情報を抽出することを可能にする。
+
+・ポートスキャンの流れ
+1) ifconfig
+2) service postgresql start 
+3) mfconsole 
+4) db_status
+5) workspace -a 設定したい名前
+6) search 使用したモジュールの名前
+7) use directory name で移動。
+8) set RHOSTS IPアドレスで、ターゲットのIPアドレスを設定
+9) show options
+10) curl IPアドレスでヘッダーの確認
+11) sysinfroでターゲットの情報を確認
+
+quiz
+・Metasploitフレームワークの補助モジュールは主にスキャンとネットワーク検出に使用
+・Metasploitの補助モジュールを使用してポートスキャンを設定するときにはhostとポート範囲を頻繁に設定する。
+
+task Metasploitを使用して、1番目に脆弱性のあるマシンを利用してそこに接続されているマシンのポートスキャンを行う
+
+
+FTP列挙
+・Metasploit Freiburg補助モジュールはできるだけ多くの情報を列挙する
+
+・FTPは、TCPポート21を使うプロトコルで、サーバーとクライアントの間のファイル共有を容易にする。
+→複数の補助モジュールを使って情報を列挙したり、FTPサーバー上で動作するターゲットに対してブルートフォース攻撃を行う。
+→FTPの認証は、パスコードとユーザーネームで行うが、設備不備ののあるFTPサーバーは匿名ログインでアクセスできてしまう。
+
+・プロセス
+1）service postgresql start
+2) ifconfig
+3) msfconlose
+4) workspace -a name
+5) search portscan
+6) use directry-name/tcp
+7) show options 
+8) set RHOSTS IPアドレス（2を3に変える）
+9) run
+10) back
+11) search ftp
+12) search type:auyiliary name:ftp
+13) use directory-name
+14) ifconfig
+15) show options
+16) set RHOST IPアドレス
+17) run
+18) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
