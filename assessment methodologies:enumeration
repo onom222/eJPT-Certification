@@ -102,7 +102,149 @@ FTP列挙
 15) show options
 16) set RHOST IPアドレス
 17) run
-18) 
+というようにターゲットのRHOSTなどの変更などを行っていく。
+
+quiz
+・ftpブルートフォース攻撃によってサービスが一時的に無効になる原因は、ログイン試行回数が多すぎるとサーバーが過負荷になる。
+＊ブルートフォース攻撃；パスワードなどのログイン情報を不正に取得するために考えられるすべての組み合わせを力任せに試すサイバー攻撃
+・ftpは通常ポート21でホストされる。
+
+task metasploitを使用してftp列挙を実行すること
+1) kaliマシンにアクセス
+2) pingコマンドを使用してターゲットの生死を確認。
+3) 以下のコマンドを使用してmetasploit framework msfconsoleを起動
+msfconsole
+4) 以下のモジュールを使用して、ターゲット上で実行されているftpサーバーのサービスを識別する必要がある。
+use auxiliary/scanner/ftp/ftp_version
+5) 以下のモジュールオプションを使用して、ターゲットのオプションを設定
+set RHOSTS ドメイン名
+6) 以下のコマンドでモジュールを実行
+run
+7) 以下のコマンドを使用して、認証に使用できる正当な資格情報を取得するために、ftpサーバーでブルートフォース攻撃を実行する。
+use auxiliary/scanner/ftp/ftp_login
+6) 以下のコマンドでより具体的なターゲットオプションを構成
+set RHOSTS ドメイン名
+7) 以下のコマンドで、USER_FILEおよびPASS_FILEオプションを設定する（ブルートフォース攻撃をしてるため）
+set USER_FILE /usr/share/metasploit-framework/data/wordlists/common_users.txt
+set PASS_FILE /usr/share/metasploit-framework/data/wordlists/common_users.txt
+7) 以下のコマンドで実行
+run
+8) 以下のコマンドでftpサーバーで匿名ログオンが許可されているかを確認
+use auxiliary/scanner/ftp/anonymous
+set RHOSTS ドメイン名
+run
+9) 上記でログイン可能になったら、以下のコマンドでftpにログイン（ログインとパスワードはブルーどフォースで判明したものを使用）
+ftp ドメイン名
+
+
+SMB列挙
+・SMBから可能な限り多くの情報を列挙するための補助モジュール
+
+・SMBとは、LAN上でのコンピュータ間でのファイルと周辺機器の共有を促進するために使用されるネットワークファイルを共有するためのプロトコル
+・SMBはポート445を使う。
+・LinuxのSMB実装を行うのは、Sambaであり、基本的にwindowsでは、システムからlinuxの共有やデバイスにアクセスしたりその逆を行ったりできる。
+
+・プロセス
+1) ifconfigでIPアドレスの取得
+2) service postgresql start
+3) mfsconsole
+4) workspace a name
+5) setg RHOSTS IPアドレス（3に設定）
+SMB補助を検索するプロセス
+1) search smb
+2) search type:auxiliary name:smb
+3) use バージョンモデル
+4) show options
+5) run
+
+quiz
+・smb列挙では、ターゲットシステム上の共有にアクセスできることが便利な理由は、機密性の高いファイルにアクセスできるから
+・smbバージョンを列挙する目的は、脆弱性と対象となるOSを特定する。
+・smbユーザーを列挙するために使用されるmetasploit補助モジュールは、「auxiliary/scanner/smb_enumusers」
+
+task smbサーバの偵察を実行し、ネットワーク上のsmbサーバーからの情報を識別して抽出する方法
+1) kalilinuxを起動
+2) 以下のコマンドで、smbdで使用されるデフォルトのtcpポートを見つける。
+nmap ドメイン名
+3) 以下のコマンドで、nmbdで使用されるデフォルトのudpポートを見つける
+nmap -sU --top-ports 25 ドメイン名
+4) 以下のコマンドでsambaサーバーのワークグループを見つける
+nmap -sV -p 445 ドメイン名
+5) 以下のコマンドで、nmapスクリプトで、sambaサーバーの正確なバージョンを見つける。
+nmap --script smb-os-discovery.nse -p 445 ドメイン名
+6) 以下のコマンドで、smb_version metasploitモジュールを使用して、sambaサーバーの正確なバージョンを見つける
+msfconsole -q
+use auxiliary/scanner/smb/smb_version
+set RHOSTS ドメイン名
+exploit
+7) nmapを使用して、sambaサーバのnetbiosコンピュータの名前を見つける
+nmap --script smb-os-discovery.nse -p 445 ドメイン名
+8) nmblookupを使用して、sambaサーバのnetbiosコンピュータ名を見つける
+nmblookup -A ドメイン名
+9) smbclientを使用して、sambaサーバーで匿名接続が許可されているかを確認する
+smbclient -L ドメイン名 -N
+10) rpcclientを使用して、sambaサーバーで匿名接続が許可されているかを確認する
+rpcclient -U "" -N ドメイン名
+
+webサーバーの列挙
+・webサーバーは、web上でWebサイトのデータを提供するために使用されるソフトウェア
+・Webサーバーは、クライアントとwebサーバー間のコミュニケーションを促進するためにhttpを利用する。
+・httpは、コミニュケーションのためにtcp port 80を利用するアプリケーション層プロトコルである
+→暗号化のためにssl証明書を設定すると、ポートは443になる。
+・ウェブサーバーのバージョン、httoヘッダー、ブルートフォース攻撃を列挙するために列挙モジュールを利用することができる
+・webサイトの例としては、apache,nginx,microsoft IIS
+
+・robots.txtは、ウェブサーバーのルートであり、検索エンジンがインデックスを作成するのを防ぐために使用する。
+
+・プロセス
+1) ifconfig
+2) service postgresql start
+3) msfconsole
+4) workspace -a name
+5) setg RHOST IPアドレス
+6) search http
+7) search type:auxiliary name:http
+8) use auxiliary/scanner/http/http_version
+9) show options
+10) run
+11) search http_header
+12) use 
+13) show options
+14) run
+15) search robots_txt
+16) use auxiliary/scanner/http/robots_txt
+17) show options
+18) run
+19) curl http://IPアドレス/data
+20) curl http://IPアドレス/secure
+21) search dir scannner
+*デイレクトりブルートフォース攻撃：
+22) use auxiliary/scanner/http/dir_scannner
+23) run
+24) search file_dir
+25) set DICTIONARY /usr/share/wordlists/
+26) show options
+27) run
+28) search http_login
+29) use
+30) show options
+31) set AUTH_URI /secure/
+32) unset USERNAME_FILE
+33) run
+34) show options
+35) set USER_FILE /usr/share/metasploit-framework/data/wordlists/namelist.txt
+36) set PASS_FILE /usr/share/metasploit-framework/data/ordlists/unix_passwords.txt
+37) run
+38) show options
+39) set VERBOSE true
+40) run
+
+quiz
+・列挙の目的でhttpヘッダーを取得するために使用されるhttpリクエストメソッドは、GET
+・
+
+
+
 
 
 
