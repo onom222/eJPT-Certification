@@ -301,3 +301,38 @@ nmap -sV -scriptt banner targetIP
 3) netcatを使用してsmtpサービスに接続し、サーバーのドメイン名を取得
 nc targetIP port_num
 
+
+msfによる脆弱性スキャン
+・脆弱性スキャン検出とは、ターゲットをスキャンして脆弱性を探し、それが悪用可能かどうかを確認するプロセスである
+・ここでは、補助モジュールやエクスプロトモジュールを使用して、サービスやOS、ウェブアプリケーションに内在する脆弱性をスキャンする
+
+・msfconsole内でのnmapスキャンは、db_nampを使用する
+・analyzeは、脆弱性のヒントを教えてくれる
+・searchsploitは、既知の脆弱性をローカルで検索できる
+
+nessusによる脆弱性スキャン
+・nessusは、tenableが開発した商用の脆弱性スキャナー
+・nessusは、ターゲットシステムの脆弱性スキャンを実行し、その結果をmsfにインポートして解析や悪用する
+・nessusは、脆弱性の特定を自動化し、cveコードのような脆弱性に関する関連情報を提供
+
+quiz
+・MSFデータベース内の脆弱性情報を表示するために使用できるMSFconsoleコマンドは、vulns
+・特定の年にリリースされた特定のCVEを検索するために使用できるMSFコンソール検索クエリは、search cve:2017 platform:windows
+
+wmapを用いたwebappの脆弱性スキャン
+・wmapは、webserverの列挙を自動化したり、webアプリケーションの脆弱性スキャンしたりするために使用する機能豊富で強力なwebアプリケーション脆弱性スキャナー
+・wmapはmsfのプラグインとして利用可能で、msfに直接ロードできる
+・wmapはmsfと完全に統合されているので、msf内からwebアプリの脆弱性スキャンを実行できる。
+
+・wmapの主要コマンド
+load wmap：wmapプラグインをロードする
+wmap_sites -a <URL>：サイトを登録することにより、スキャンサイトを追加できる
+wmap_site -l 登録済みのサイトを一覧で表示
+wmap_targets -t <URL>　スキャンの対象を定義して、どのURLやパスを実際にスキャンするか指定
+wmap_targets -l：ターゲット一覧の確認
+wmap_run -t <id>：実際に脆弱性スキャン・クローリングを開始
+wmap_vulns：発見された脆弱性を一覧で確認
+wmap_nodes：クローリングで収集したページ構造を確認
+
+
+
