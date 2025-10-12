@@ -15,7 +15,7 @@ Frag2　ターゲット上で実行されているWebサイトとそのバージ
 Frag3 
 1) ターミナルを起動
 2) 以下のコマンドを使って指定したURLに対して、用意した単語リストの各行をパスとしてつけたHTTPリクエストを順に投げて、存在するディレクトリやファイルを探す
-gobuster dir -u http://ドメイン名 -w /usr/share/wordlist/dirb/common.txt
+gobuster dir -u http://ドメイン名 -w /usr/share/wordlists/dirb/common.txt
 *gobuster:ディレクトリやファイルの列挙やDNSサブドメインの列挙を行うツール
 *dir:サブコマンドでgobusterに「ディレクトリ/ファイル列挙モードで動け」と指示する
 *-u:「URL」を指定するオプション
