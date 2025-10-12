@@ -9,6 +9,7 @@ curl http://ドメイン名/robots.txt
 Frag2　ターゲット上で実行されているWebサイトとそのバージョン
 1) ターミナルを起動する
 2) whatweb ターゲットドメイン名
+   nmap -sC -sV target domain
 
 *whatweb：
 
@@ -24,10 +25,13 @@ gobuster dir -u http://ドメイン名 -w /usr/share/wordlists/dirb/common.txt
 *wordlist:
 *dirb:
 *common.txt:
+dirb target domain
 
 Frag4　ウェブルート内の見落とされたバックアップファイルの中に機密構成の内容が含まれる
 1) ターミナルを起動
 2) 以下のコードでバックアップファイルを開く。
+gobuster -u http://target.ine.local -w /usr/share/wordlsits/big.txt -X .bak,.tar.gz,.zip,.sql,.bak.zip
+
 「curl -s http://ドメイン名/wp-config.bak」
 *curl:
 *-s:
@@ -37,6 +41,8 @@ Frag4　ウェブルート内の見落とされたバックアップファイル
 Frag5　特定のファイルをミラーリングすると興味深いことが明らかになることがある
 1) ターミナルを起動
 2)　以下のコマンドを使用して、ローカルコンピュータにターゲットドメインの内容をミラーリングする。
+httrack target domain -O 出力ディレクトリ名
+
 wget -r -np -k http://ドメイン名
 3) 以下のコマンドを使用してミラーリングの中から自分の見つけたいものを探す
 grep -ri "見つけたい文字列" ./ドメイン名
