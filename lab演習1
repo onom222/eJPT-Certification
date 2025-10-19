@@ -12,6 +12,7 @@ Frag2　ターゲット上で実行されているWebサイトとそのバージ
    nmap -sC -sV target domain
 
 *whatweb：
+*-sC：--script=defaultの略で、対象ホストの様々な情報が手に入るので、便利である。
 
 Frag3 
 1) ターミナルを起動
@@ -25,7 +26,7 @@ gobuster dir -u http://ドメイン名 -w /usr/share/wordlists/dirb/common.txt
 *wordlist:
 *dirb:
 *common.txt:
-dirb target domain
+dirb http://target domain
 
 Frag4　ウェブルート内の見落とされたバックアップファイルの中に機密構成の内容が含まれる
 1) ターミナルを起動
