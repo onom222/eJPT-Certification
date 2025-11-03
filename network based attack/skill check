@@ -1,0 +1,8 @@
+Q1 感染したユーザがアクセスし、200 OK応答コードを返したURLを見つける方法
+1) ファイルをWiresharkで開く
+2) 以下のコマンドをフィルターに入力するとステータスを見ることができる
+http.response.code==200
+3) Hypertext Transfer ProtocolにあるRequestURIを確認する
+
+Q2  感染した Windows クライアントの IP アドレス、MAC アドレスを見つける方法
+1) wiresharkのフィルターでhttpと入力する
