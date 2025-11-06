@@ -1,0 +1,92 @@
+情報収集と列挙
+Nmap
+Nmapを使ったポートスキャンと列挙
+・nmapは無料かつオープンソースのネットワークスキャナであり、ネットワーク上でホストの発見をしたり、ターゲットの開いているポートをスキャンしたりすることができる。
+・開いているポートで動作しているサービスやターゲットシステム上で稼働しているOSを特定するためにも使用できる
+・nmapスキャン結果をMSFにインポート可能な形式で出力することで脆弱性の検出やエクスプロイトに利用することができる
+
+列挙
+補助モジュールを使ったポートスキャン
+・補助モジュールは、スキャン、探索、ファジングなどの機能を実行するために使用する。
+・補助モジュールを使用して、TCP-UDPのポートスキャンや、FTP・SSH・HTTPなどのサービスからの情報列挙を行うことができる
+・補助モジュールは、ペンテスの情報収集フェーズやポストエクスプロイトフェーズでも使用できる
+・また、ターゲットシステムで初期アクセス
+
+demo
+1) meterpreterを取得
+2) shell
+3) /bin/bash -i
+4) ifconfig
+5) Ctrl+Z
+6) y
+7) run autoroute -s my_target
+8) backgound
+9) sessions
+10) search portscan
+11) use auxiliary/scanner/portscan/tcp
+12) set RHOSTS target2
+13) run
+14) back
+15) search udp
+16) use auxiliary/scanner/discovery/udp_sweep
+17) set RHOSTS target2
+18) run
+
+FTP列挙
+・FTPは、TCP port21を使用するプロトコルで、サーバとクライアント間のファイルを共有を容易に行えるようにする。
+・また、ウェブサーバーのディレクトリへ/からファイルを転送する手段として頻繁に利用される
+・複数の補助モジュールを使って情報の列挙を行ったり、FTPサーバ上のターゲットに対してブルートフォースを実行できたりする
+・FTP認証では、ユーザ名とパスコードの組み合わせを使用するが、設定が不適切なFTPサーバでは匿名ログインが可能になることもある。
+
+SMB列挙
+・SMBは、
+・SMBは、TCP port445を使用するが、元々は、NetBiosでTCP port139を使っていた
+・SAMBAは、Linux上のSMB実装で、Windowsの系統がLinuxの共有やデバイスのアクセスできるようにする
+・補助モジュールを利用して、SMBのバージョン、共有、ユーザの列挙やユーザ名・パスワード特定のためのブルートフォース攻撃を行うことができる。
+
+webserverの列挙
+・webサーバーとは、ウェブ上でWebサイトのデータを配信するために使用されるソフトウェア
+・webサーバーは、HTTPを使ってクライアントとサーバ間の通信を行う
+・HTTPはアプリケーション層のプロトコルであり、通信には通常、TCP port80を利用する
+・補助モジュールを使って、ウェブサーバーのバージョンやHTTPヘッダーの列挙、ディレクトリのブルートフォース探索などを行うことができる
+・一般的なwebserverの例は、Apache、Nginx、Microsoft IIS
+
+・demo apache列挙
+1) 
+
+MySQL列挙
+・MySQLは、SQLに基づくオープンソースのリレーショナルデータベース管理システム
+・主に、記録データや顧客データなどを保存するために使用される、特にウェブアプリケーションのデータ保存に広く利用される
+・既定では、TCPport3306を使用しますが、他の任意の開いているTCPportでもホスト可能
+・補助モジュールを利用して、MySQLのバージョンを列挙したり、認証のブルートフォース攻撃を行ったり、SQLクエリの実行などを行うことができる。
+
+・demo MySQL列挙
+1) nmap -sC -sV target
+2) service postgresql start && msfconsole
+3) search type:auxiliary name:mysql
+4) use axiliary/scanner/mysql/mysql_login
+5) 基本情報の設定を行い、ブルートフォース攻撃
+show options
+set RHOSTS target
+set PASS_FILE /usr/share/metasploit-framework/data/wordlists/unix_passwords.txt
+6) 5)で判明したパスを使って、列挙を行う
+search type:auxiliary name:mysql
+use 
+set USERNAME 判明したname
+set PASSWORD 判明したpassword
+set RHOSTS target
+run
+7) 
+
+SSH列挙
+・SSHは、暗号化を提供するリモート管理プロトコルでTelnetの後継にあたる
+・主に、サーバーやシステムへのリモートアクセスに使用される。
+・既定では、TCP port22を使用するが、他の開いているポートに変更して利用することもできる
+・補助モジュールを使ってターゲットで動作しているSSHのバージョンを列挙したり、ブルートフォース攻撃を行ってパスワードを特定しリモートアクセスを取得できる
+
+SMTP列挙
+・SMTPは、電子メールの送受信に使用される通信プロトコル
+・SMTPは既定でもTCP port25を使用するがTCP port465や587に設定されることもある
+・補助モジュールを利用してターゲット上で動作しているSMTPのバージョンやユーザアカウントを列挙できる
+
+
