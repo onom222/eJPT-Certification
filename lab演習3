@@ -45,6 +45,7 @@ set PASS_FILE ディレクトリの設定
 smbclient //targetドメイン/ユーザ名 -U ユーザ名
 
 task3 ftpに対するログイン
+
 1) 以下のコマンドでftpのポート番号を明らかにする
 nmap -sC -sV -p- targetドメイン
 2) 以下のコマンドで、ftpにログイン
